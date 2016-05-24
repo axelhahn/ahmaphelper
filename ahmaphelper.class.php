@@ -19,6 +19,7 @@
  * <br>
  * --- HISTORY:<br>
  * 2016-04-17  1.0  first public release<br>
+ * 2016-05-25  1.1  added options minzoom; new methods getUrls() + fixPosition()<br>
  * <br>
  * @author Axel Hahn
  * @license GPL
@@ -47,12 +48,14 @@ class ahmaphelper {
           https://www.google.com/maps/place/Tivoli+Stadion+Tirol,+6020+Innsbruck/@47.2572743,11.4191015,15z/data=!4m2!3m1!1s0x479d69432145b01f:0x8c24f2d1161f1c90
          */
         'google' => array(
-            'regex' => '#//www\.google\..*/maps/.*@([\-0-9\.]*)\,([\-0-9\.]*),([0-9]*)z#',
+            'regex' => '#//www\.google\..*/maps/.*@([\-0-9\.]*)\,([\-0-9\.]*),([0-9\.]*)z#',
             'lat' => 1,
             'lon' => 2,
             'zoom' => 3,
             'url' => 'https://www.google.com/maps/@[lat],[lon],[zoom]z',
             'defaultzoom' => 11,
+            'maxzoom' => 21,
+            'zoomtype' => 'float',
         ),
         /*
           OSM:
@@ -65,6 +68,8 @@ class ahmaphelper {
             'zoom' => 1,
             'url' => 'http://www.openstreetmap.org/#map=[zoom]/[lat]/[lon]',
             'defaultzoom' => 11,
+            'maxzoom' => 19,
+            'zoomtype' => 'int',
         ),
         /*
           Yandex:
@@ -72,15 +77,19 @@ class ahmaphelper {
           https://yandex.ru/maps/?ll=7.444947%2C46.943538&z=15
          */
         'yandex' => array(
-            'regex' => '#yandex\.ru/maps/.*?.*ll=([\-0-9\.]*)\%2C([\-0-9\.]*)&z=([0-9]*)#',
+            'regex' => '#yandex\.ru/maps/.*?.*ll=([\-0-9\.]*)\%2C([\-0-9\.]*)&z=([0-9\.]*)#',
             'lat' => 2,
             'lon' => 1,
             'zoom' => 3,
             'url' => 'https://yandex.ru/maps/?ll=[lon]%2C[lat]&z=[zoom]',
             'defaultzoom' => 11,
+            'maxzoom' => 18,
+            'zoomtype' => 'float',
         ),
     );
 
+    protected $_aPosition=false;
+    
     // ----------------------------------------------------------------------
     // METHODS
     // ----------------------------------------------------------------------
@@ -93,6 +102,114 @@ class ahmaphelper {
         return true;
     }
 
+    // ----------------------------------------------------------------------
+    // PRIVATE
+    // ----------------------------------------------------------------------
+
+    /**
+     * helper function for generateUrl(): check parameters for position and zoom
+     * it returns true/ false
+     * @see getProviders() to get a list of known providers
+     * 
+     * @param string  $sProvider  provider of a map website
+     * @param float   $lat        position - latitude
+     * @param float   $lon        position - longitude
+     * @param float   $zoomlevel  zoomlevel
+     * @param bool    $bStrict    use strict mode
+     * @return string
+     */
+    private function _isValidPositionSet($sProvider, $lat, $lon, $zoomlevel){
+        if (!array_key_exists($sProvider, $this->_aPatterns)) {
+            echo 'WARNING: provider [' . $sProvider . '] does not exist in ' . __CLASS__ . '.';
+            return false;
+        }
+        if ($lat === false || $lon === false || $zoomlevel === false) {
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * helper function for generateUrl(): check parameters if they fit strict
+     * requirements for a provider.
+     * it returns true/ false
+     * @see getProviders() to get a list of known providers
+     * 
+     * @param string  $sProvider  provider of a map website
+     * @param float   $lat        position - latitude
+     * @param float   $lon        position - longitude
+     * @param float   $zoomlevel  zoomlevel
+     * @param bool    $bStrict    use strict mode
+     * @return string
+     */
+    private function _isStrictPositionSet($sProvider, $lat, $lon, $zoomlevel){
+        if(!$this->_isValidPositionSet($sProvider, $lat, $lon, $zoomlevel)){
+            return false;
+        }
+        if($this->_aPatterns[$sProvider]['zoomtype']==='int' && $zoomlevel!=(int)$zoomlevel){
+            // echo "$sProvider requires an integer zoom level - $zoomlevel<br>";
+            return false;
+        }
+        if($this->_aPatterns[$sProvider]['maxzoom']<$zoomlevel){
+            // echo "max zoom for $sProvider is ".$this->_aPatterns[$sProvider]['maxzoom']."<br>";
+            return false;
+        }
+        return true;
+    }
+    
+    // ----------------------------------------------------------------------
+    // PUBLIC FUNCTIONS
+    // ----------------------------------------------------------------------
+    
+    /**
+     * fix positition data to compatible values that match all providers
+     * @return type
+     */
+    public function fixPosition() {
+        if(!$this->_aPosition || array_key_exists('_orig', $this->_aPosition)){
+            return $this->_aPosition;
+        }
+        
+        $this->_aPosition['_warnings']=array();
+        $this->_aPosition['_orig']=array();
+        
+        // check: zoomlevel is integer?
+        if ($this->_aPosition['zoom']-(int)$this->_aPosition['zoom']!==0){
+            $this->_aPosition['_orig']['zoom']=(array_key_exists('zoom', $this->_aPosition['_orig']) ? $this->_aPosition['_orig']['zoom'] : $this->_aPosition['zoom']);
+            $this->_aPosition['_warnings'][]='zoom level is not integer.';
+            $this->_aPosition['zoom']=(int)$this->_aPosition['zoom'];
+        }
+        // check: zoomlevel exceeds maximum?
+        $iMaxZoom=$this->getMinZoom();
+        if ($this->_aPosition['zoom'] > $iMaxZoom){
+            $this->_aPosition['_orig']['zoom']=(array_key_exists('zoom', $this->_aPosition['_orig']) ? $this->_aPosition['_orig']['zoom'] : $this->_aPosition['zoom']);
+            $this->_aPosition['_warnings'][]='zoom level '.$this->_aPosition['_orig']['zoom'].' is too large; maximum is '.$iMaxZoom.'.';
+            $this->_aPosition['zoom']=$iMaxZoom;
+        }
+        
+        // cleanup unneeded keys
+        if(!count($this->_aPosition['_warnings'])){
+            unset($this->_aPosition['_warnings']);
+            unset($this->_aPosition['_orig']);
+        }
+        return $this->_aPosition;
+    }
+    
+    /**
+     * get minimal zoom level of all providers
+     * @return float or int
+     */
+    public function getMinZoom() {
+        $iReturn=false;
+        foreach ($this->getProviders() as $sProvider) {
+            $iReturn=$iReturn 
+                    ? min(array($iReturn, $this->_aPatterns[$sProvider]['maxzoom']))
+                    :$this->_aPatterns[$sProvider]['maxzoom']
+                    ;
+        }
+        return $iReturn;
+    }
+    
     /**
      * get a position by parsing a url. It returns an array with the keys
      * - source - given url
@@ -106,14 +223,14 @@ class ahmaphelper {
      * @return array
      */
     public function getPos($sUrl) {
-        $aPosition = false;
+        $this->_aPosition = false;
         // echo "$sUrl<br>";
         foreach ($this->_aPatterns as $sKey => $aTmp) {
             // echo "regex: " . $aTmp['regex'] . "<br>";
             preg_match_all($aTmp['regex'], $sUrl, $aMatches);
             if (count($aMatches) >= 2 && count($aMatches[2])) {
                 // echo "$sKey <pre>".print_r($aMatches, 1)."</pre>";
-                $aPosition = array(
+                $this->_aPosition = array(
                     'source' => $sUrl,
                     'provider' => $sKey,
                     'lat' => $aMatches[$aTmp['lat']][0],
@@ -123,7 +240,7 @@ class ahmaphelper {
                 break;
             }
         }
-        return $aPosition;
+        return $this->_aPosition;
     }
 
     /**
@@ -134,6 +251,7 @@ class ahmaphelper {
         return array_keys($this->_aPatterns);
     }
 
+
     /**
      * generate an url to a map with a given position
      * @see getProviders() to get a list of known providers
@@ -141,26 +259,21 @@ class ahmaphelper {
      * @param string  $sProvider  provider of a map website
      * @param float   $lat        position - latitude
      * @param float   $lon        position - longitude
-     * @param integer $zoomlevel  zoomlevel
+     * @param float   $zoomlevel  zoomlevel
      * @return string
      */
     public function generateUrl($sProvider, $lat = 0, $lon = 0, $zoomlevel = false) {
-        if (!array_key_exists($sProvider, $this->_aPatterns)) {
-            echo 'WARNING: provider [' . $sProvider . '] does not exist in ' . __CLASS__ . '.';
-            return false;
-        }
         $fLat = (float) $lat;
         $fLon = (float) $lon;
-        if ($fLat === false || $fLon === false) {
-            echo "WARNING: position has wrong format lat = $lat, lon = $lon.";
-            return false;
-        }
         if (!$zoomlevel) {
             $iZoom = $this->_aPatterns[$sProvider]['zoom'];
+        } else {
+            $iZoom = (float) $zoomlevel;
         }
-        $iZoom = (int) $zoomlevel;
-        if (!$iZoom) {
-            echo "WARNING: set a zoom level.";
+        if(!$this->_isValidPositionSet($sProvider, $lat, $lon, $iZoom)){
+            return false;
+        }
+        if(!$this->_isStrictPositionSet($sProvider, $lat, $lon, $iZoom)){
             return false;
         }
         $sReturn = str_replace(
@@ -174,14 +287,38 @@ class ahmaphelper {
      * get a list with links to a given position position with all map providers
      * @param float   $lat        position - latitude
      * @param float   $lon        position - longitude
-     * @param integer $zoomlevel  zoomlevel
+     * @param float   $zoomlevel  zoomlevel
      * @return array
      */
-    public function generateUrls($lat = 0, $lon = 0, $zoomlevel = false) {
+    public function generateUrls($lat = 0, $lon = 0, $zoomlevel = false, $bStrict=true) {
         $aReturn = array();
         foreach ($this->getProviders() as $sProvider) {
             $aReturn[$sProvider] = $this->generateUrl($sProvider, $lat, $lon, $zoomlevel);
         }
+        return $aReturn;
+    }
+
+    /**
+     * get a list with links to a given position position with all map providers
+     * call this function after method getPos([urh])
+     * 
+     * @param bool    $bStrict    use strict mode
+     * @return array
+     */
+    public function getUrls() {
+        $aReturn = array();
+        if (!$this->_aPosition){
+            return false;
+        }
+        foreach ($this->getProviders() as $sProvider) {
+            $aReturn[$sProvider] = $this->generateUrl(
+                $sProvider, 
+                $this->_aPosition['lat'], 
+                $this->_aPosition['lon'], 
+                $this->_aPosition['zoom']
+            );
+        }
+        
         return $aReturn;
     }
 
