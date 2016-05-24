@@ -20,6 +20,7 @@ http://www.axel-hahn.de/demos/maphelper/
 -------------------------------------------------------------------------------
 
 2016-04-17  1.0  first public release
+2016-05-25  1.1  added options minzoom; new methods getUrls() + fixPosition()
 
 -------------------------------------------------------------------------------
 

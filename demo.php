@@ -173,6 +173,7 @@ function getOutput($sUrl = false) {
             <strong>Ressources</strong><br>
             Source: <a href="https://github.com/axelhahn/ahmaphelper">Github</a>
             /
+            Author: Axel Hahn (<a href="http://www.axel-hahn.de/">www.axel-hahn.de</a>)
         </p>
             <div class="footer">
                 www.axel-hahn.de
