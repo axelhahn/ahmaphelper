@@ -115,7 +115,6 @@ class ahmaphelper {
      * @param float   $lat        position - latitude
      * @param float   $lon        position - longitude
      * @param float   $zoomlevel  zoomlevel
-     * @param bool    $bStrict    use strict mode
      * @return string
      */
     private function _isValidPositionSet($sProvider, $lat, $lon, $zoomlevel){
@@ -139,7 +138,6 @@ class ahmaphelper {
      * @param float   $lat        position - latitude
      * @param float   $lon        position - longitude
      * @param float   $zoomlevel  zoomlevel
-     * @param bool    $bStrict    use strict mode
      * @return string
      */
     private function _isStrictPositionSet($sProvider, $lat, $lon, $zoomlevel){
@@ -180,11 +178,11 @@ class ahmaphelper {
             $this->_aPosition['zoom']=(int)$this->_aPosition['zoom'];
         }
         // check: zoomlevel exceeds maximum?
-        $iMaxZoom=$this->getMinZoom();
-        if ($this->_aPosition['zoom'] > $iMaxZoom){
+        $iMinZoom=$this->getMinZoom();
+        if ($this->_aPosition['zoom'] > $iMinZoom){
             $this->_aPosition['_orig']['zoom']=(array_key_exists('zoom', $this->_aPosition['_orig']) ? $this->_aPosition['_orig']['zoom'] : $this->_aPosition['zoom']);
-            $this->_aPosition['_warnings'][]='zoom level '.$this->_aPosition['_orig']['zoom'].' is too large; maximum is '.$iMaxZoom.'.';
-            $this->_aPosition['zoom']=$iMaxZoom;
+            $this->_aPosition['_warnings'][]='zoom level '.$this->_aPosition['_orig']['zoom'].' is too large; maximum is '.$iMinZoom.'.';
+            $this->_aPosition['zoom']=$iMinZoom;
         }
         
         // cleanup unneeded keys
@@ -224,12 +222,9 @@ class ahmaphelper {
      */
     public function getPos($sUrl) {
         $this->_aPosition = false;
-        // echo "$sUrl<br>";
         foreach ($this->_aPatterns as $sKey => $aTmp) {
-            // echo "regex: " . $aTmp['regex'] . "<br>";
             preg_match_all($aTmp['regex'], $sUrl, $aMatches);
             if (count($aMatches) >= 2 && count($aMatches[2])) {
-                // echo "$sKey <pre>".print_r($aMatches, 1)."</pre>";
                 $this->_aPosition = array(
                     'source' => $sUrl,
                     'provider' => $sKey,
@@ -285,6 +280,7 @@ class ahmaphelper {
 
     /**
      * get a list with links to a given position position with all map providers
+     * 
      * @param float   $lat        position - latitude
      * @param float   $lon        position - longitude
      * @param float   $zoomlevel  zoomlevel
@@ -300,9 +296,10 @@ class ahmaphelper {
 
     /**
      * get a list with links to a given position position with all map providers
-     * call this function after method getPos([urh])
+     * call this function after method getPos() that fetches the position from
+     * an url
+     * @see getPos()
      * 
-     * @param bool    $bStrict    use strict mode
      * @return array
      */
     public function getUrls() {

@@ -31,6 +31,12 @@ $oMaphelper = new ahmaphelper();
 
 (1)
 get a position from url:
+go to a map provider:
+  https://www.google.ch/maps
+  http://www.openstreetmap.org/
+  https://yandex.ru/maps/
+Zoom in, go to any position and copy the url
+
 $aPos = $oMaphelper->getPos($sUrl);
 
 (2)
@@ -38,16 +44,17 @@ generate urls with the same position
 print_r($oMaphelper->getUrls());
 
 (3)
-fix position data to be compatible to all map providers
+fix position data to be compatible to all map providers. 
 print_r($oMaphelper->fixPosition());
 print_r($oMaphelper->getUrls());
 
 (4)
-manually generate links with position data and zoom level (array):
+manually generate links with position data and zoom level (returns an array):
 print_r($oMaphelper->generateUrls($aPos['lat'], $aPos['lon'], $aPos['zoom']));
 
 (5)
-manually generate link with position data and zoom level to a given provider (string):
+manually generate link with position data and zoom level to a given provider 
+(returns a string):
 echo $oMaphelper->generateUrl([provider], $aPos['lat'], $aPos['lon'], $aPos['zoom']);
 echo $oMaphelper->generateUrls("google", $aPos['lat'], $aPos['lon'], $aPos['zoom']);
 
@@ -59,6 +66,6 @@ helper functions:
   ... returns names of known providers
 
   $oMaphelper->getMinZoom()
-  ... returns minimal zoom level of all providers
+  ... returns lowest maxzoom level of all providers
 
 -------------------------------------------------------------------------------
