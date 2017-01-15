@@ -12,15 +12,19 @@ It generates urls with the same position with other map services.
 Licence GPL 3.0
 
 author: Axel Hahn
-http://www.axel-hahn.de
+https://www.axel-hahn.de
 
 see DEMO
-http://www.axel-hahn.de/demos/maphelper/
+https://www.axel-hahn.de/demos/maphelper/
+
+DOCS
+https://www.axel-hahn.de/docs/ahmaphelper/index.htm
 
 -------------------------------------------------------------------------------
 
 2016-04-17  1.0  first public release
 2016-05-25  1.1  added options minzoom; new methods getUrls() + fixPosition()
+2017-01-15  1.2  added  support for regional maps (provider map1eu)
 
 -------------------------------------------------------------------------------
 
