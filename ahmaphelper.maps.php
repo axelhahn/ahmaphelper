@@ -47,6 +47,20 @@ return array(
         ),
     ),
     /*
+      Mapillary
+      https://www.mapillary.com/app/?lat=46.9448304129896&lng=7.437269493180992&z=15.68258779448344
+     */
+    'mapillary' => array(
+        'regex' => '#//www\.mapillary\.com/app/\?lat=([\0-9\.]*)&lng=([\-0-9\.]*)&z=([\-0-9\.]*)#',
+        'lat' => 1,
+        'lon' => 2,
+        'zoom' => 3,
+        'url' => 'https://www.mapillary.com/app/?lat=[lat]&lng=[lon]&z=[zoom]',
+        'defaultzoom' => 11,
+        'maxzoom' => 20,
+        'zoomtype' => 'float',
+    ),
+    /*
       Flightradar24
       https://www.flightradar24.com/46.95,7.45/11
      */
@@ -90,7 +104,7 @@ return array(
         'lat' => 2,
         'lon' => 3,
         'zoom' => 1,
-        'url' => 'http://www.openstreetmap.org/#map=[zoom]/[lat]/[lon]',
+        'url' => 'https://www.openstreetmap.org/#map=[zoom]/[lat]/[lon]',
         'defaultzoom' => 11,
         'maxzoom' => 19,
         'zoomtype' => 'int',
@@ -109,6 +123,21 @@ return array(
         'maxzoom' => 20,
         'zoomtype' => 'int',
     ),
+    /*
+      Windy
+      https://www.windy.com/?46.377,10.415,7
+     */
+    'windy' => array(
+        'regex' => '#//www\.windy\.com/\?([\-0-9\.]*),([\-0-9\.]*),([0-9]*)#',
+        'lat' => 1,
+        'lon' => 2,
+        'zoom' => 3,
+        'url' => 'https://windy.com/?[lat],[lon],[zoom]',
+        'defaultzoom' => 11,
+        'maxzoom' => 17,
+        'zoomtype' => 'int',
+    ),
+	
     /*
       Yandex:
       https://yandex.ru/maps/10513/bern/?ll=7.444947%2C46.943538&z=15
