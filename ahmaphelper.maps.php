@@ -1,6 +1,8 @@
 <?php
 /**
  * this file is included in ahmaphelper.class.php
+ * TODO: 
+ * https://www.qwant.com/maps/#map=10.45/52.7857268/13.2371361
  * 
  * pattern definitions for map websites to parse its url and fetch
  * longitude and latitude from it.
@@ -65,7 +67,7 @@ return array(
       https://www.flightradar24.com/46.95,7.45/11
      */
     'fligthtradar24' => array(
-        'regex' => '#//www\.flightradar24\.com/([\-0-9\.]*)/([\-0-9\.]*)/([0-9]*)#',
+        'regex' => '#//www\.flightradar24\.com/([\-0-9\.]*),([\-0-9\.]*)/([0-9]*)#',
         'lat' => 1,
         'lon' => 2,
         'zoom' => 3,
